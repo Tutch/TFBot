@@ -26,7 +26,7 @@ class GithubComm:
             if isinstance(ex, BadCredentialsException):
                 raise NoUserTokenException('GitHub user token is invalid.')
             
-    def get_target_source_files(self):
+    def get_target_source_files(self, repo_name):
         """
         Creates a list of the source files on the the repository.
 
@@ -40,7 +40,9 @@ class GithubComm:
         source_files = []
 
         if self.repository is not None:
-            pass
+            source_files = self.folder_interface.get_files_on_repo(repo_name)
+
+        return source_files
 
     def get_contributors_list(self):
         """

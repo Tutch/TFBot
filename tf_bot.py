@@ -42,10 +42,13 @@ class TFBot:
 
             #1 Get source files list
             #source_files = self.github_comm.get_target_source_files()
+            source_files = self.github_comm.get_target_source_files(repository_full_name)
+            print(source_files)
 
             #2 Compile the list of users in the repository
             contributors_list = self.github_comm.get_contributors_list()
             print(contributors_list)
+
 
         except Exception as ex:
             print(ex)

@@ -23,6 +23,16 @@ class RepositoryFolderInterface:
         """
         return '{}/{}'.format(self.REPOSITORIES_FOLDER, repo_name)
 
+    def get_files_on_repo(self, repo_name):
+        files = []
+        path = self.get_repository_folder(repo_name)
+
+        for r, _, f in os.walk(path):
+            for file in f:
+                files.append(os.path.join(r, file))
+
+        return files
+
     def repo_exists(self, repo_folder):
         if os.path.isdir(repo_folder):
             return True
