@@ -36,13 +36,11 @@ class TFBot:
             token (str): GitHub user token.
         """
         try:
-            #0 Clone the repository if it's not already there
-            repository_url, repository_full_name = self.github_comm.get_repository_url(repository_name)
-            self.github_comm.clone_repository(repository_url, repository_full_name)
+            #0 Init
+            self.github_comm.init_repository(repository_name)
 
             #1 Get source files list
-            #source_files = self.github_comm.get_target_source_files()
-            source_files = self.github_comm.get_target_source_files(repository_full_name)
+            source_files = self.github_comm.get_target_source_files()
             print(source_files)
 
             #2 Compile the list of users in the repository

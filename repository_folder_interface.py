@@ -1,4 +1,7 @@
 import os
+import shutil
+import subprocess
+import json
 from pydriller import GitRepository, RepositoryMining
 
 class RepositoryFolderInterface:
@@ -27,14 +30,23 @@ class RepositoryFolderInterface:
         files = []
         path = self.get_repository_folder(repo_name)
 
-        for r, _, f in os.walk(path):
-            for file in f:
-                files.append(os.path.join(r, file))
+        wd = os.getcwd()
+        os.chdir(path)
+        output = subprocess.check_output(['github-linguist', '--json'])
+        output = json.loads(output)
+        os.chdir(wd)
+
+        for key, file_list in output.items():
+            for f in file_list:
+                files.append(f)
 
         return files
 
-    def repo_exists(self, repo_folder):
-        if os.path.isdir(repo_folder):
+    def remove_repo(self, repo_name):
+        shutil.rmtree(self.get_repository_folder(repo_name))
+
+    def repo_exists(self, repo_name):
+        if os.path.isdir(self.get_repository_folder(repo_name)):
             return True
         else:
             return False

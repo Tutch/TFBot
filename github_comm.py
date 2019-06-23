@@ -2,7 +2,7 @@ from github import Github, BadCredentialsException
 from repository_folder_interface import RepositoryFolderInterface
 from tf_bot_exception import NoUserTokenException
 from util import levenshtein_distance
-from git import Repo
+from git import Repo, Git
 
 class GithubComm:
     """
@@ -20,13 +20,23 @@ class GithubComm:
             self.folder_interface = RepositoryFolderInterface()
             self.g = Github(token)
             self.token = token
-            self.repository = None
+            self.repo_folder = ''
+            self.api_repository = None
+            self.git_repository = None
             self.authenticated_user = self.g.get_user()
         except Exception as ex:
             if isinstance(ex, BadCredentialsException):
                 raise NoUserTokenException('GitHub user token is invalid.')
             
-    def get_target_source_files(self, repo_name):
+    def init_repository(self, repo_name):
+        self.api_repository = self.authenticated_user.get_repo(repo_name)
+        self.repo_folder = self.folder_interface.get_repository_folder(self.api_repository.full_name)
+
+        if self.folder_interface.repo_exists(self.api_repository.full_name):
+            self.folder_interface.remove_repo(self.api_repository.full_name)
+            self.git_repository = Repo.clone_from(self.api_repository.clone_url, self.repo_folder)
+
+    def get_target_source_files(self):
         """
         Creates a list of the source files on the the repository.
 
@@ -37,10 +47,19 @@ class GithubComm:
         Returns:
             list: A list of dictionaries containing the fields 'email' and 'dev_aliases'.
         """
-        source_files = []
+        source_files = {}
+        
+        if self.git_repository is not None:
+            commit_list = list(self.git_repository.iter_commits())
 
-        if self.repository is not None:
-            source_files = self.folder_interface.get_files_on_repo(repo_name)
+            # Commit history (from first to last)
+            for commit in commit_list:
+                tag = commit.hexsha
+                
+                # Checkout
+                Git(self.repo_folder).checkout(tag)
+
+                source_files[tag] = self.folder_interface.get_files_on_repo(self.api_repository.full_name)
 
         return source_files
 
@@ -62,8 +81,8 @@ class GithubComm:
         """
         contributors_list = []
 
-        if self.repository is not None:
-            for collaborator in self.repository.get_collaborators():
+        if self.api_repository is not None:
+            for collaborator in self.api_repository.get_collaborators():
                 email = collaborator.email
                 name = collaborator.name
         
@@ -87,41 +106,3 @@ class GithubComm:
                     contributors_list.append(list_entry)
                     
         return contributors_list
-
-    def get_repository_url(self, repository_name):
-        """
-        Gets the clone url for the GitHub repository.
-
-        Args:
-            repository_name (str): the name of the repository.
-        Returns:
-            str: GitHub url for the git repository.
-        """
-        self.repository = self.authenticated_user.get_repo(repository_name)
-
-        return self.repository.clone_url, self.repository.full_name
-    
-    def clone_repository(self, github_repo_url, repo_name):
-        """ 
-        Clones the repository locally to the constant REPOSITORES_FOLDER location.
-
-        The folder is saved on a full-name structure. Example: User/MyRepo will
-        be saved to REPOSITORIES_FOLDER/User/MyRepo.
-
-        Args:
-            github_repo_url (str): url for the GitHub repository.
-            repo_name (str): the full-name of the repository.
-        Returns:
-            str: the repository location on disk.
-        """
-        repo_folder = self.folder_interface.get_repository_folder(repo_name)
-        
-        try:
-            if self.folder_interface.repo_exists(repo_folder):
-                return repo_folder 
-            
-            Repo.clone_from(github_repo_url, repo_folder)
-            return repo_folder
-        except Exception as ex:
-            print(ex)
-            return ''
