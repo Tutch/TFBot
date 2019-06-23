@@ -23,3 +23,7 @@ def levenshtein_distance(s, t):
             v0[j] = v1[j]
             
     return v1[len(t)]
+
+
+def get_ignore_extension_file_list():
+    extensions = ['png', 'jpg', 'bmp', 'txt', 'md', 'doc', 'xlsx', 'csv']

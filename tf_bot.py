@@ -17,7 +17,7 @@ class TFBot:
         except NoUserTokenException as ex:
             print(ex)
 
-    def set_repository_token(token=None):
+    def set_repository_token(self, token=None):
         """
         Sets the GitHub token for this instance of TFBot.
         
@@ -36,10 +36,12 @@ class TFBot:
             token (str): GitHub user token.
         """
         try:
-            #1 Clone the repository if it's not already there
-            folder_interface = RepositoryFolderInterface()
+            #0 Clone the repository if it's not already there
             repository_url, repository_full_name = self.github_comm.get_repository_url(repository_name)
-            folder_interface.clone_repository(repository_url, repository_full_name)
+            self.github_comm.clone_repository(repository_url, repository_full_name)
+
+            #1 Get source files list
+            #source_files = self.github_comm.get_target_source_files()
 
             #2 Compile the list of users in the repository
             contributors_list = self.github_comm.get_contributors_list()
